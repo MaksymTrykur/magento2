@@ -1,0 +1,49 @@
+namespace: magento-2
+magento-2:
+  defines: runnable
+  metadata:
+    name: magento-2
+    description: >-
+      A Magento 2 e-commerce platform that enables businesses to create online
+      stores
+    icon: https://emojiapi.dev/api/v1/shopping_cart.svg
+  containers:
+    magento-2:
+      build: .
+      dockerfile: docker-compose.yml
+  services:
+    http-port:
+      container: magento-2
+      port: 80
+      host-port: 80
+      publish: false
+      protocol: TCP
+      description: Port for HTTP protocol
+    https-port:
+      container: magento-2
+      port: 443
+      host-port: 443
+      publish: false
+      protocol: TCP
+      description: Port for HTTPS protocol
+  variables:
+    media-dir:
+      env: MEDIA_DIR
+      type: string
+      description: Directory for media files
+      value: '!!!SETME!!!'
+    base-url:
+      env: BASE_URL
+      type: string
+      description: URL base of the application
+      value: '{{unsecure_base_url}}'
+    unsecure-base-url:
+      env: UNSECURE_BASE_URL
+      type: string
+      description: Unsecured base URL for the application
+      value: '{{unsecure_base_url}}'
+    secure-base-url:
+      env: SECURE_BASE_URL
+      type: string
+      description: Secured base URL for the application
+      value: '{{secure_base_url}}'
