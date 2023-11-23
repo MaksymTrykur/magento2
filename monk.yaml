@@ -1,0 +1,5 @@
+namespace: magento2
+
+stack:
+  defines: group
+  members: []
