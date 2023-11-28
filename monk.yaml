@@ -1,0 +1,108 @@
+namespace: magento2
+
+nginx:
+  defines: runnable
+  inherits: nginx/basic
+  metadata:
+    name: nginx
+    description: Nginx web server used to serve the Magento application.
+    icon: https://assets.monk.io/icons/nginx-logo-FF65602A76-seeklogo.com.png
+  variables:
+    domain:
+      type: string
+      value: domain.com
+      description: ''
+    email:
+      type: string
+      value: do-not-reply@domain.com
+      description: ''
+    use-certbot:
+      type: bool
+      value: true
+      description: ''
+
+mysql:
+  defines: runnable
+  inherits: monk-mysql/db
+  metadata:
+    name: mysql
+    description: MySQL database required by Magento for data storage.
+    icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
+  variables:
+    image_tag:
+      type: string
+      value: latest
+      description: ''
+    monk_mysql_database:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_password:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_root_password:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_user:
+      type: string
+      value: monk
+      description: ''
+
+redis:
+  defines: runnable
+  inherits: redis/redis
+  metadata:
+    name: redis
+    description: Redis service used by Magento for caching and session storage.
+    icon: >-
+      https://cdn.icon-icons.com/icons2/2415/PNG/512/redis_original_wordmark_logo_icon_146369.png
+  variables:
+    redis_disable_commands:
+      type: string
+      value: FLUSHDB,FLUSHALL,CONFIG
+      description: ''
+    redis_empty_password:
+      type: string
+      value: 'yes'
+      description: ''
+    redis_instance_name:
+      type: string
+      value: master
+      description: ''
+    redis_io_thread:
+      type: string
+      value: '1'
+      description: ''
+    redis_io_threads_do_reads:
+      type: string
+      value: 'yes'
+      description: ''
+    redis_port:
+      type: int
+      value: 6379
+      description: ''
+
+elasticsearch:
+  defines: runnable
+  metadata:
+    name: elasticsearch
+    description: Elasticsearch service used by Magento for advanced search capabilities.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    elasticsearch:
+      image: env-2055.registry.local/elasticsearch:2.4-develop-2932016
+      build: .
+      dockerfile: Dockerfile.elasticsearch
+  services: {}
+  connections: {}
+  variables: {}
+
+stack:
+  defines: group
+  members:
+    - magento2/nginx
+    - magento2/mysql
+    - magento2/redis
+    - magento2/elasticsearch
