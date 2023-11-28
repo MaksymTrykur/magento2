@@ -1,0 +1,181 @@
+namespace: magento2
+
+nginx-web-server:
+  defines: runnable
+  inherits: nginx/basic
+  metadata:
+    name: nginx-web-server
+    description: Nginx web server to serve the Magento PHP application.
+    icon: https://assets.monk.io/icons/nginx-logo-FF65602A76-seeklogo.com.png
+  variables:
+    domain:
+      type: string
+      value: domain.com
+      description: ''
+    email:
+      type: string
+      value: do-not-reply@domain.com
+      description: ''
+    use-certbot:
+      type: bool
+      value: true
+      description: ''
+
+magento-php-application:
+  defines: runnable
+  metadata:
+    name: magento-php-application
+    description: The PHP application for the Magento eCommerce platform.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    magento-php-application:
+      image: env-2762.registry.local/magento-php-application:2.4-develop-2932016
+      build: .
+      dockerfile: Dockerfile.magento-php-application
+  services: {}
+  connections: {}
+  variables: {}
+
+magento-database:
+  defines: runnable
+  metadata:
+    name: magento-database
+    description: The database service required by the Magento application, typically MySQL.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    magento-database:
+      image: env-2762.registry.local/magento-database:2.4-develop-2932016
+      build: .
+      dockerfile: Dockerfile.magento-database
+  services:
+    mysql-port:
+      description: MySQL server port
+      container: magento-database
+      port: 3306
+      host-port: 3306
+      publish: true
+      protocol: tcp
+  connections:
+    database-to-php-application:
+      target: magento2/magento-php-application
+      service: mysql-port
+      optional: true
+      description: Magento database service connects to the Magento PHP application
+  variables:
+    mysql-root-password:
+      env: MYSQL_ROOT_PASSWORD
+      type: string
+      value: rootpassword
+      description: Root password for the MySQL database
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      value: magento
+      description: Database name for Magento
+    mysql-user:
+      env: MYSQL_USER
+      type: string
+      value: magento_user
+      description: Username for the Magento database
+    mysql-password:
+      env: MYSQL_PASSWORD
+      type: string
+      value: magento_password
+      description: Password for the Magento database user
+
+php-fpm-service:
+  defines: runnable
+  metadata:
+    name: php-fpm-service
+    description: >-
+      PHP-FPM service for processing PHP scripts, used in conjunction with
+      Nginx.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    php-fpm-service:
+      image: php:fpm
+      build: .
+  services:
+    php-fpm-default:
+      description: Default port for PHP-FPM to listen for incoming connections from Nginx
+      container: php-fpm-service
+      port: 9000
+      host-port: 9000
+      publish: false
+      protocol: tcp
+  connections:
+    nginx-to-php-fpm:
+      target: magento2/nginx-web-server
+      service: nginx
+      optional: true
+      description: Nginx web server connects to PHP-FPM service for processing PHP scripts
+  variables:
+    http-via:
+      env: HTTP_VIA
+      type: string
+      value: nginx
+      description: Used to determine the presence of intermediate proxies
+    http-x-forwarded-for:
+      env: HTTP_X_FORWARDED_FOR
+      type: string
+      value: nginx
+      description: >-
+        Used to identify the originating IP address of a client connecting
+        through an HTTP proxy or load balancer
+    incremental-build:
+      env: INCREMENTAL_BUILD
+      type: bool
+      value: false
+      description: Flag to determine if the build should be incremental
+    mage-error-report-dir-nesting-level:
+      env: MAGE_ERROR_REPORT_DIR_NESTING_LEVEL
+      type: int
+      value: 1
+      description: Configures the nesting level of directories for error reporting
+    config--default--web--test2--test-value-4:
+      env: CONFIG__DEFAULT__WEB__TEST2__TEST_VALUE_4
+      type: string
+      value: testValueDefault
+      description: Environment-specific configuration value for testing
+    config--websites--base--web--test2--test-value-4:
+      env: CONFIG__WEBSITES__BASE__WEB__TEST2__TEST_VALUE_4
+      type: string
+      value: testValueWebsiteBase
+      description: Environment-specific configuration value for website base testing
+    config--stores--default--web--test2--test-value-4:
+      env: CONFIG__STORES__DEFAULT__WEB__TEST2__TEST_VALUE_4
+      type: string
+      value: testValueStoreDefault
+      description: Environment-specific configuration value for store default testing
+    config--default--camelcase--uppercase--snake-case:
+      env: CONFIG__DEFAULT__CAMELCASE__UPPERCASE__SNAKE_CASE
+      type: string
+      value: CamelCaseValue
+      description: Environment-specific configuration value with mixed case naming
+    config--websites--secondwebsite--camelcase--uppercase--snake-case:
+      env: CONFIG__WEBSITES__SECONDWEBSITE__CAMELCASE__UPPERCASE__SNAKE_CASE
+      type: string
+      value: SecondWebsiteCamelCaseValue
+      description: >-
+        Environment-specific configuration value for a second website with mixed
+        case naming
+    config--stores--third-store--camelcase--uppercase--snake-case:
+      env: CONFIG__STORES__THIRD_STORE__CAMELCASE__UPPERCASE__SNAKE_CASE
+      type: string
+      value: ThirdStoreCamelCaseValue
+      description: >-
+        Environment-specific configuration value for a third store with mixed
+        case naming
+    config--stores--default--abc--qrs--xyz:
+      env: CONFIG__STORES__DEFAULT__ABC__QRS__XYZ
+      type: string
+      value: AbcQrsXyzValue
+      description: Environment-specific configuration value for default store ABC QRS XYZ
+
+stack:
+  defines: group
+  members:
+    - magento2/nginx-web-server
+    - magento2/magento-php-application
+    - magento2/magento-database
+    - magento2/php-fpm-service
