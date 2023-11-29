@@ -1,0 +1,64 @@
+namespace: magento2
+
+web-server:
+  defines: runnable
+  inherits: apache/apache
+  metadata:
+    name: web-server
+    description: Nginx or Apache web server to serve the Magento application.
+    icon: https://www.techrepublic.com/wp-content/uploads/2016/11/apachehero.jpg
+  variables:
+    apache-imagetag:
+      type: string
+      value: latest
+      description: ''
+    http-port:
+      type: int
+      value: '8080'
+      description: ''
+    https-port:
+      type: int
+      value: '8443'
+      description: ''
+
+database:
+  defines: runnable
+  metadata:
+    name: database
+    description: External MySQL or MariaDB database service required by Magento.
+    icon: https://emojiapi.dev/api/v1/robot.svg
+  containers:
+    database:
+      image: mysql:latest
+      build: .
+  services:
+    mysql-default:
+      description: Default MySQL port for database connections
+      container: database
+      port: 3306
+      host-port: 3306
+      publish: true
+      protocol: tcp
+  connections: {}
+  variables:
+    mysql-database:
+      env: MYSQL_DATABASE
+      type: string
+      value: magento
+      description: The name of the database used by the service.
+    mysql-user:
+      env: MYSQL_USER
+      type: string
+      value: magento_user
+      description: The username used to connect to the database.
+    mysql-password:
+      env: MYSQL_PASSWORD
+      type: string
+      value: magento_pass
+      description: The password used to connect to the database.
+
+stack:
+  defines: group
+  members:
+    - magento2/web-server
+    - magento2/database
