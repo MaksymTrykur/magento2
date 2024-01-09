@@ -1,0 +1,141 @@
+namespace: magento2
+
+mysql-database:
+  defines: runnable
+  inherits: monk-mysql/db
+  metadata:
+    name: mysql-database
+    description: MySQL database service required by Magento.
+    icon: https://labs.mysql.com/common/logos/mysql-logo.svg?v2
+  variables:
+    image_tag:
+      type: string
+      value: latest
+      description: ''
+    monk_mysql_database:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_password:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_root_password:
+      type: string
+      value: monk
+      description: ''
+    monk_mysql_user:
+      type: string
+      value: monk
+      description: ''
+
+web-server:
+  defines: runnable
+  inherits: apache/apache
+  metadata:
+    name: web-server
+    description: >-
+      Web server service, such as Nginx or Apache, to serve the Magento
+      application.
+    icon: https://www.techrepublic.com/wp-content/uploads/2016/11/apachehero.jpg
+  variables:
+    apache-imagetag:
+      type: string
+      value: latest
+      description: ''
+    http-port:
+      type: int
+      value: '8080'
+      description: ''
+    https-port:
+      type: int
+      value: '8443'
+      description: ''
+
+magento-application:
+  defines: runnable
+  metadata:
+    name: magento-application
+    description: Magento PHP application serving the frontend and backend.
+    icon: https://emojiapi.dev/api/v1/shopping_cart.svg
+  containers:
+    magento-application:
+      image: env-4598.registry.local/magento-application:2.4-develop-26l06f
+      build: .
+      dockerfile: Dockerfile.magento-application
+  services:
+    http-port:
+      description: HTTP port for serving the Magento application.
+      container: magento-application
+      port: 80
+      host-port: 80
+      publish: true
+      protocol: tcp
+    https-port:
+      description: HTTPS port for serving the Magento application securely.
+      container: magento-application
+      port: 443
+      host-port: 443
+      publish: true
+      protocol: tcp
+  connections:
+    database-connection:
+      target: magento2/mysql-database
+      service: monk-mysql-db
+      optional: true
+      description: Connection to the MySQL database service required by Magento.
+    php-fpm-connection:
+      target: magento2/php-fpm
+      service: http-port
+      optional: true
+      description: >-
+        Connection to the PHP FastCGI Process Manager for handling PHP
+        processing.
+    web-server-connection:
+      target: magento2/web-server
+      service: apache-http
+      optional: true
+      description: >-
+        Connection to the web server service, such as Nginx or Apache, to serve
+        the Magento application.
+  variables:
+    mage-mode:
+      env: MAGE_MODE
+      type: string
+      value: default
+      description: >-
+        Defines the Magento mode the application is running in, such as
+        'default', 'developer', or 'production'.
+
+php-fpm:
+  defines: runnable
+  metadata:
+    name: php-fpm
+    description: PHP FastCGI Process Manager for handling PHP processing.
+    icon: https://emojiapi.dev/api/v1/elephant.svg
+  containers:
+    php-fpm:
+      image: php:fpm
+      build: .
+  services: {}
+  connections:
+    magento-application-connection:
+      target: magento2/magento-application
+      service: http-port
+      optional: true
+      description: PHP-FPM connects to the Magento application to process PHP scripts.
+  variables: {}
+
+stack:
+  defines: group
+  members:
+    - magento2/mysql-database
+    - magento2/web-server
+    - magento2/magento-application
+    - magento2/php-fpm
+  metadata:
+    name: magento-open-source
+    description: >-
+      Magento Open Source is an eCommerce platform that allows developers to
+      build and customize their own online stores.
+    icon: https://emojiapi.dev/api/v1/shopping_cart.svg
